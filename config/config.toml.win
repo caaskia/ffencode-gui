@@ -1,0 +1,52 @@
+[app]
+    period = 30
+    fcodec    = "libx264"
+    size      = "480p"
+    VBRate    = "700k"
+    minVBR    = "300k"
+    maxVBR    = "1000k"
+    ext       = "mkv"
+    workDir   = "d:\\media\\in"
+    postDir   = "d:\\media\\converted"
+    targetDir = "d:\\media\\result"
+    ffmpeg    = "/usr/bin/ffmpeg"
+
+[dict]
+    fCodec = [
+        "libx264",
+        "h264_vaapi",
+        "libx265",
+        "hevc_nvenc",
+        "hevc_vaapi",
+        "libvpx-vp9",
+        "vp9_vaapi_opus",
+    ]
+    VBRate = ["100k", "150k", "200k", "250k", "300k", "350k", "400k", "450k",
+        "500k",
+        "600k",
+        "700k",
+        "800k",
+        "900k",
+        "1000k",
+        "1500k",
+        "2000k",
+        "2500k",
+        "3000k",
+        ]
+    minVBR = ["100k", "150k", "200k", "250k", "300k"]
+    maxVBR = [
+        "500k",
+        "550k",
+        "600k",
+        "650k",
+        "700k",
+        "800k",
+        "900k",
+        "1000k",
+        "1500k",
+        "2000k",
+        "2500k",
+        "3000k",
+    ]
+    size = ["same", "240p", "360p", "480p", "576p", "720p", "1080p"]
+    ext = ["mkv", "mp4", "avi", "webm", "mov", "flv", "wmv", "mpg", "mpeg", "m4v"]

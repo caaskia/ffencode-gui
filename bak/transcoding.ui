@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>490</width>
+    <height>637</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Transcoding Configuration</string>
+  </property>
+  <widget class="QPlainTextEdit" name="output_pane">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>430</y>
+     <width>471</width>
+     <height>141</height>
+    </rect>
+   </property>
+   <property name="readOnly">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="start_button">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>580</y>
+     <width>161</width>
+     <height>36</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Start Transcoding</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+   <property name="default">
+    <bool>false</bool>
+   </property>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="stop_button">
+   <property name="geometry">
+    <rect>
+     <x>290</x>
+     <y>580</y>
+     <width>151</width>
+     <height>36</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>StopTranscoding</string>
+   </property>
+   <property name="autoDefault">
+    <bool>false</bool>
+   </property>
+   <property name="default">
+    <bool>false</bool>
+   </property>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>469</width>
+     <height>411</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="tab_dir">
+    <attribute name="title">
+     <string>Каталоги</string>
+    </attribute>
+    <widget class="QLabel" name="workDir_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Рабочий каталог не выбран</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="workDir_button">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>429</width>
+       <height>36</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Выберите папку обработки</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="targetDir_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Целевой каталог не выбран</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="targetDir_button">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>100</y>
+       <width>429</width>
+       <height>36</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Выберите папку для сохранения сконвертированных файлов</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="postDir_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>160</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Каталог постобработки не выбран</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="postDir_button">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>180</y>
+       <width>429</width>
+       <height>36</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Выберите папку для перемещения оригинала</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="ext_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>230</y>
+       <width>231</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Расширение выходного файла:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="ext_combo">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>260</y>
+       <width>101</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string>mkv</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>mkv</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>mp4</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="period_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>310</y>
+       <width>301</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Период запуска конвертации (10 - 900 сек):</string>
+     </property>
+    </widget>
+    <widget class="QSlider" name="periodSlider">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>340</y>
+       <width>441</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="minimum">
+      <number>10</number>
+     </property>
+     <property name="maximum">
+      <number>900</number>
+     </property>
+     <property name="singleStep">
+      <number>5</number>
+     </property>
+     <property name="value">
+      <number>60</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="periodEdit">
+     <property name="geometry">
+      <rect>
+       <x>310</x>
+       <y>300</y>
+       <width>51</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>60</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_codec">
+    <attribute name="title">
+     <string>Кодек</string>
+    </attribute>
+    <widget class="QLabel" name="resize_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Выходное разрешение:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="resize_combo">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>429</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>same</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="fCodec_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Видео кодек:</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="fCodec_combo">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>100</y>
+       <width>429</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>libx264</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="VBRate_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>150</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Выходной битрейт видео (VBRate):</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="VBRate_combo">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>170</y>
+       <width>429</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>500k</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="minVBR_label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>220</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Минимальный битрейт (minVBR):</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="minVBR_combo">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>240</y>
+       <width>429</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>250k</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QLabel" name="maxVBR_label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>290</y>
+       <width>429</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Максимальный битрейт (maxVBR):</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="maxVBR_combo">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>310</y>
+       <width>429</width>
+       <height>34</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>750k</string>
+      </property>
+     </item>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

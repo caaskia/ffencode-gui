@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "ffencode-gui"
+version = "0.1.0"
+description = ""
+authors = ["caas <caaskia@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+pyside6 = "^6.6.2"
+ffmpy = "^0.3.2"
+python-ffmpeg = "^2.0.10"
+toml = "^0.10.2"
+nuitka = "^2.1.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

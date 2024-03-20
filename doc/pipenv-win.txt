@@ -1,0 +1,36 @@
+pipenv --python 3.11
+Virtualenv location: C:\Users\admin\.virtualenvs\ffencode-gui-6q0lHb0B
+Virtualenv location: C:\Users\admin\.virtualenvs\ffencode-qt-2WF6vSZ7
+
+=======================
+pipenv shell
+-----------------------
+
+# pipenv install pyqt6 
+pipenv install pyside6
+pipenv install ffmpy python-ffmpeg toml
+pipenv install nuitka
+
+
+pyqt6 = "^6.6.1"
+black = "^ 24.3.0"
+ffmpy = "^0.3.2"
+python-ffmpeg = "^2.0.10"
+toml = "^0.10.2"
+
+
+pipenv install nuitka
+
+=========================================================================
+# python -m nuitka --standalone --plugin-enable=pyqt6 .\main_ffencode.py
+-------------------------------------------------------------------------
+python -m nuitka --standalone --plugin-enable=pyside6 .\main_ffencode.py
+
+------------------------------------------------------------------------
+# python -m nuitka --recurse-all --standalone .\main_ffencode.py
+# python3 -m nuitka --clang --standalone .\main_ffencode.py
+# python3 -m nuitka --clang --standalone --show-progress .\main_ffencode.py
+
+# python3 -m nuitka --clang --standalone --static-libpython=yes main_ffencode.py
+
+

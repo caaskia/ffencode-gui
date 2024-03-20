@@ -1,0 +1,80 @@
+Shellcheck has been successfully installed
+To run the shellcheck command, you may need to restart your shell or add the following to your profile:
+  export PATH="/home/lynx/.local/bin:$PATH"
+
+========================
+mkdir ffencode-gui
+# poetry init
+-----------------------
+cd ffencode-qt
+==================================
+poetry shell
+# source {path_to_venv}/bin/activate
+
+# poetry install
+====================================
+
+python = ">=3.10,<3.13"
+pyside6 = "^6.6.2"
+
+
+# poetry add pyside6==6.6.2
+
+poetry add pyside6
+poetry add ffmpy python-ffmpeg toml
+poetry add nuitka
+
+
+python -m nuitka --standalone --plugin-enable=pyside6 .\main_ffencode.py
+
+
+
+
+
+
+poetry run python your_script.py
+
+-------------
+poetry run black
+poetry run pytest
+-------------------------------
+exit
+# deactivate
+
+
+====================
+tree ffencode-qt
+--------------------
+
+
+
+
+
+
+
+=========================================
+export PATH="/home/lynx/.local/bin:$PATH"
+===========================================
+
+
+on Linux/Unix
+~/.local/share/pypoetry
+~/.local/share/pypoetry/venv/bin/poetry
+=================================
+curl -sSL https://install.python-poetry.org | python3 -
+
+
+
+
+Альтернативно, вы можете вызвать Poetry явно с помощью
+/home/lynx/.local/bin/poetry
+
+Update:
+poetry self update
+
+# Auto-loaded (recommended)
+poetry completions bash >> ~/.bash_completion
+
+---------------------
+poetry build
+===================================================

@@ -1,0 +1,53 @@
+Nuitka-Plugins:pyqt6: Support for PyQt6 is not perfect, e.g. Qt threading does not work,
+so prefer PySide6 if you can.
+=============================================
+sudo apt install qt6-base-dev qtcreator
+==========================================
+
+mkdir pyqt6
+
+sudo apt install python3.10-venv
+
+python -m venv /home/lynx/pyqt6/pyqt6-env
+
+====================================
+activate
+------------------------------
+cd /home/lynx/pyqt6/
+source pyqt6-env/bin/activate
+-------------------------------
+
+pip install pyqt6
+pip install pyqt6-tools
+
+pyuic6 -V
+6.4.2
+
+========================
+PyQt Designer
+------------------------
+export LD_LIBRARY_PATH=/home/lynx/pyqt6/pyqt6-env/lib/python3.10/site-packages/PyQt6/Qt6/lib/
+pyqt6-tools designer
+
+============================
+pyuic6 transcoding.ui -o transcoding_ui.py
+
+===================================
+
+
+1. Сохраните фрагмент кода в файле, например, transcoding_ui.py.
+
+2. Откройте терминал или командную строку и перейдите в каталог, содержащий файл transcoding_ui.py.
+
+3. Выполните следующую команду, чтобы сгенерировать класс пользовательского интерфейса:
+
+   pyuic6 -x transcoding.py -o transcoding_ui.py
+
+
+Эта команда использует инструмент pyuic6 для преобразования файла .ui (в данном случае самого файла transcoding_ui.py) в модуль Python.
+
+4. После выполнения команды файл transcoding_ui.py будет обновлен сгенерированным классом пользовательского интерфейса.
+
+Теперь вы можете импортировать класс Ui_TranscodingWindow из модуля transcoding_ui в свой основной код, как и раньше:
+
+из transcoding_ui импортировать Ui_TranscodingWindow
