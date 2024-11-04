@@ -150,6 +150,25 @@ class MyApplication(QMainWindow, Ui_Form):
         self.output_pane.setTextCursor(cursor)
         self.output_pane.repaint()
 
+    @Slot(str, bool)
+    def replace_output(self, text, replace=False):
+        cursor = self.output_pane.textCursor()
+
+        # Move cursor to the end of the document
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+
+        if replace:
+            # Move to the start of the last line
+            cursor.movePosition(QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.KeepAnchor)
+            cursor.select(QTextCursor.SelectionType.LineUnderCursor)
+            cursor.removeSelectedText()  # Clear the line's content
+
+        # Insert new text at the cursor's position
+        cursor.insertText(text)
+        cursor.movePosition(QTextCursor.MoveOperation.End)  # Move the cursor to the end
+        self.output_pane.setTextCursor(cursor)
+        self.output_pane.repaint()
+
     def event_prepare_start(self):
         if not self.workDir or not self.targetDir:
             self.print_to_output("Please select directories.")
@@ -178,6 +197,7 @@ class MyApplication(QMainWindow, Ui_Form):
         )
 
         self.transcoding_thread.sig_show_message.connect(self.print_to_output)
+        self.transcoding_thread.sig_replace_message.connect(self.replace_output)
         self.transcoding_thread.sig_stop.connect(self.on_transcoding_stopped)
 
         self.transcoding_thread.start()  # Start the transcoding thread

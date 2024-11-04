@@ -14,6 +14,7 @@ from utils.utils_ffmpeg import move_file
 
 class TranscodingThread(QThread):
     sig_show_message = Signal(str)
+    sig_replace_message = Signal(str, bool)
     sig_stop = Signal()
 
     def __init__(
@@ -46,7 +47,28 @@ class TranscodingThread(QThread):
             if first_run:
                 first_run = False
             else:
-                self.sleep(self.period)  # Sleep for the specified period before the next run
+                self.send_msg(f"Now wait for {self.period} second")
+                for i in range(self.period):
+                    remaining = self.period - i
+                    last_digit = remaining % 10
+                    last_two_digits = remaining % 100
+
+                    if last_two_digits in (11, 12, 13, 14):
+                        seconds = "секунд"
+                    elif last_digit == 1:
+                        seconds = "секунду"
+                    elif last_digit in (2, 3, 4):
+                        seconds = "секунды"
+                    else:
+                        seconds = "секунд"
+
+                    # self.send_msg(f"Запуск транскодирования через {remaining} {seconds}")
+                    self.sig_replace_message.emit(f"Запуск транскодирования через {remaining} {seconds}", True)
+
+                    if not self.transcoding_active:
+                        break
+                    self.sleep(1)
+
 
             work_files = getSendFiles(self.workDir)  # Get the list of files to process
             target_dir = self.targetDir
