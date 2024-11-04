@@ -6,8 +6,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QThread, Signal
 
-from utils_ffConv import ffConv, getSendFiles
-from utils_ffmpeg import move_file
+from utils.utils_ffConv import ffConv, getSendFiles
+from utils.utils_ffmpeg import move_file
 
 
 class TranscodingThread(QThread):
@@ -57,7 +57,7 @@ class TranscodingThread(QThread):
                     self.process_video_info(info)
 
                     out_file = ffConv(in_file, self.targetDir, ffOptions=self.ffOptions)
-                    if os.path.exists(Path(out_file)):
+                    if out_file and os.path.exists(Path(out_file)):
                         self.send_msg(f"Transcoding complete: {out_file}")
                         self.send_msg("")
                         move_file(in_file, self.postDir)
@@ -74,11 +74,11 @@ class TranscodingThread(QThread):
     def process_audio_info(self, info):
         audio_info = info.get("audio_info")
         if audio_info:
-            (f"Audio channels: {info['audio_channels']}")
+            self.send_msg(f"Audio channels: {info.get('audio_channels')}")
             self.send_msg(
-                f"Audio codec name: {info['audio_codec_name']} ({info['audio_codec_long_name']})"
+                f"Audio codec name: {info.get('audio_codec_name')} ({info.get('audio_codec_long_name')})"
             )
-            self.send_msg(f"Audio sample rate: {info['audio_sample_rate']}")
+            self.send_msg(f"Audio sample rate: {info.get('audio_sample_rate')}")
 
             audio_bitrate = info.get("audio_bitrate")
             if audio_bitrate is not None:

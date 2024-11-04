@@ -6,8 +6,8 @@ from pathlib import Path
 
 from PySide6.QtCore import QThread, QTimer, Signal
 
-from utils_ffConv import ffConv, getSendFiles
-from utils_ffmpeg import move_file
+from utils.utils_ffConv import ffConv, getSendFiles
+from utils.utils_ffmpeg import move_file
 
 
 class TranscodingThread(QThread):

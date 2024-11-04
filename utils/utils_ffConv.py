@@ -5,7 +5,7 @@ from pathlib import WindowsPath, Path
 import shlex
 
 logging.basicConfig(
-    filename="transcoding.log",
+    filename="../transcoding.log",
     level=logging.NOTSET,
     format="[%(asctime)s] %(levelname)s: %(message)s",
 )
