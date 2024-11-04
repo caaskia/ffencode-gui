@@ -5,8 +5,7 @@ import logging
 
 # Настройка базовой конфигурации для логирования
 logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -18,3 +17,7 @@ def load_toml(path):
         sys.exit(1)
     with open(path, "r") as f:
         return toml.load(f)
+
+
+def get_config_value(config, key, default):
+    return config[key] if key in config else default

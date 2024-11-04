@@ -13,7 +13,9 @@ from utils.utils_ffmpeg import move_file
 class TranscodingThread(QThread):
     show_message = Signal(str)
 
-    def __init__(self, work_dir, target_dir, postDir, ffOptions, period=60, parent=None):
+    def __init__(
+        self, work_dir, target_dir, postDir, ffOptions, period=60, parent=None
+    ):
         super().__init__(parent)
         self.parent = parent
         self.workDir = work_dir
@@ -69,7 +71,6 @@ class TranscodingThread(QThread):
         self.transcoding_active = False
         self.wait()  # Wait for the thread to finish
         self.send_msg("Transcoding stopped")
-
 
     def process_audio_info(self, info):
         audio_info = info.get("audio_info")
@@ -216,9 +217,9 @@ class TranscodingThread(QThread):
 
             if video_stream:
                 info["video_info"] = True
-                info[
-                    "video_frame_size"
-                ] = f"{video_stream.get('width')}x{video_stream.get('height')}"
+                info["video_frame_size"] = (
+                    f"{video_stream.get('width')}x{video_stream.get('height')}"
+                )
                 info["video_avg_frame_rate"] = (
                     video_stream["avg_frame_rate"]
                     if "avg_frame_rate" in video_stream

@@ -219,9 +219,9 @@ class TranscodingThread(QThread):
 
             if video_stream:
                 info["video_info"] = True
-                info[
-                    "video_frame_size"
-                ] = f"{video_stream.get('width')}x{video_stream.get('height')}"
+                info["video_frame_size"] = (
+                    f"{video_stream.get('width')}x{video_stream.get('height')}"
+                )
                 info["video_avg_frame_rate"] = (
                     video_stream["avg_frame_rate"]
                     if "avg_frame_rate" in video_stream

@@ -2,19 +2,20 @@ import os
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 
 from service.transcoding_ui import Ui_Form
 from utils.utils_task import TranscodingThread
-from utils.utils_toml import load_toml
+from utils.utils_toml import load_toml, get_config_value
 
 
 class MyApplication(QMainWindow, Ui_Form):
-    start_transcoding_signal = Signal()
-    stop_transcoding_signal = Signal()
-    show_message_signal = Signal(str)
+    sig_start_transcoding = Signal()
+    sig_stop_transcoding = Signal()
+    sig_show_message = Signal(str)
+    sig_print = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -30,17 +31,19 @@ class MyApplication(QMainWindow, Ui_Form):
 
         self.transcoding_thread = None
 
+        self.sig_print.connect(self.update_output)
+
         self.workDir_button.clicked.connect(self.select_work_dir)
         self.targetDir_button.clicked.connect(self.select_target_dir)
         self.postDir_button.clicked.connect(self.select_post_dir)
 
         # Connect signals to slots
-        self.start_button.clicked.connect(self.start_transcoding_signal.emit)
-        self.stop_button.clicked.connect(self.stop_transcoding_signal.emit)
+        self.start_button.clicked.connect(self.sig_start_transcoding.emit)
+        self.stop_button.clicked.connect(self.sig_stop_transcoding.emit)
 
         # Connect slots to functions
-        self.start_transcoding_signal.connect(self.start_event)
-        self.stop_transcoding_signal.connect(self.stop_transcoding)
+        self.sig_start_transcoding.connect(self.start_event)
+        self.sig_stop_transcoding.connect(self.stop_transcoding)
 
         # Connect the valueChanged signal of the periodSlider to the update_period_edit slot
         self.periodSlider.valueChanged.connect(self.update_period_edit)
@@ -48,7 +51,7 @@ class MyApplication(QMainWindow, Ui_Form):
         # Connect the textChanged signal of the periodEdit to the update_period_slider slot
         self.periodEdit.textChanged.connect(self.update_period_slider)
 
-        self.show_message_signal.connect(self.print_to_output)
+        self.sig_show_message.connect(self.print_to_output)
 
         # get current path
         # DIR_PARAMS = os.path.join(os.path.dirname(__file__), "config")
@@ -63,23 +66,26 @@ class MyApplication(QMainWindow, Ui_Form):
             print("transcoding_params not found in config file")
             sys.exit(1)
 
-        workDir = app_config["workDir"] if "workDir" in app_config else ""
+        workDir = get_config_value(app_config, "workDir", "")
         self.workDir_label.setText(workDir)
         self.workDir = Path(workDir)
 
-        postDir = (
-            app_config["postDir"]
-            if "postDir" in app_config
-            else os.path.join(self.workDir, "converted")
+        # postDir = (
+        #     app_config["postDir"]
+        #     if "postDir" in app_config
+        #     else os.path.join(self.workDir, "converted")
+        # )
+        postDir = get_config_value(
+            app_config, "postDir", os.path.join(self.workDir, "converted")
         )
         self.postDir_label.setText(postDir)
         self.postDir = Path(postDir)
 
-        targetDir = app_config["targetDir"] if "targetDir" in app_config else ""
+        targetDir = get_config_value(app_config, "targetDir", "")
         self.targetDir_label.setText(targetDir)
         self.targetDir = Path(targetDir)
 
-        self.period = app_config["period"] if "period" in app_config else 60
+        self.period = get_config_value(app_config, "period", 60)
         self.periodSlider.setValue(self.period)
         self.periodEdit.setText(str(self.period))
 
@@ -177,9 +183,11 @@ class MyApplication(QMainWindow, Ui_Form):
 
     def select_work_dir(self):
         workDir = QFileDialog.getExistingDirectory(self, "Select Work Directory")
-        if workDir != "":
+        if workDir:
             self.workDir_label.setText(workDir)
             self.workDir = Path(workDir)
+        else:
+            self.print_to_output("No work directory selected.")
 
     def select_target_dir(self):
         targetDir = QFileDialog.getExistingDirectory(self, "Выберите целевой каталог")
@@ -197,28 +205,26 @@ class MyApplication(QMainWindow, Ui_Form):
 
     def update_period_edit(self, value):
         self.period = value
-        # Update the text of the periodEdit element with the current value of the periodSlider
         self.periodEdit.setText(str(value))
 
     def update_period_slider(self, text):
         try:
-            # Convert the text to an integer and set it as the value of the periodSlider
             value = int(text)
             self.period = value
             self.periodSlider.setValue(value)
-        except Exception as e:
-            print(e)
+        except ValueError:
+            self.print_to_output(f"Invalid input! Please enter a numeric value")
 
     def print_to_output(self, text):
-        print(text)
-        # Append the text to the output pane
-        self.output_pane.appendPlainText(text)
+        # Отправляем текст через сигнал
+        self.sig_print.emit(text)
 
-        # Scroll to the bottom to display the latest messages
+    @Slot(str)  # Определяем слот для принятия текстового аргумента
+    def update_output(self, text):
+        self.output_pane.appendPlainText(text)
         cursor = self.output_pane.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self.output_pane.setTextCursor(cursor)
-
         self.output_pane.repaint()
 
     def start_event(self):
@@ -242,13 +248,13 @@ class MyApplication(QMainWindow, Ui_Form):
         self.resize = self.resize_combo.currentText()
 
         self.print_to_output(f"Work Directory: {self.workDir}")
-        self.print_to_output('')
+        self.print_to_output("")
         self.print_to_output(f"fCodec: {self.fCodec}")
         self.print_to_output(f"VBRate: {self.VBRate}")
         self.print_to_output(f"minVBR: {self.minVBR}")
         self.print_to_output(f"maxVBR: {self.maxVBR}")
         self.print_to_output(f"ext: {self.ext}")
-        self.print_to_output('')
+        self.print_to_output("")
 
         self.ffOptions = (
             self.fCodec,
@@ -259,12 +265,20 @@ class MyApplication(QMainWindow, Ui_Form):
             self.resize,
         )
 
+        # self.ffOptions = {
+        #     "fCodec": self.fCodec_combo.currentText(),
+        #     "VBRate": self.VBRate_combo.currentText(),
+        #     "minVBR": self.minVBR_combo.currentText(),
+        #     "maxVBR": self.maxVBR_combo.currentText(),
+        #     "ext": self.ext_combo.currentText(),
+        #     "resize": self.resize_combo.currentText()
+        # }
+
         self.start_transcoding()
 
     def start_transcoding(self):
         self.transcoding_thread = TranscodingThread(
-            self.workDir, self.targetDir, self.postDir,
-            self.ffOptions, self.period
+            self.workDir, self.targetDir, self.postDir, self.ffOptions, self.period
         )
         self.transcoding_thread.show_message.connect(self.print_to_output)
         self.transcoding_thread.transcoding_active = True
@@ -275,7 +289,7 @@ class MyApplication(QMainWindow, Ui_Form):
 
     def stop_transcoding(self):
         self.print_to_output("Stopping transcoding...")
-        if hasattr(self, 'transcoding_thread') and self.transcoding_thread:
+        if hasattr(self, "transcoding_thread") and self.transcoding_thread:
             self.transcoding_thread.stop()
 
         self.stop_button.setStyleSheet("color: red")

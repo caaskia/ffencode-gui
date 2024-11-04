@@ -5,6 +5,7 @@ import subprocess
 import shutil
 
 import logging
+
 logging.basicConfig(level=logging.DEBUG, format="%(module)s - %(message)s")
 
 
@@ -64,8 +65,8 @@ def ffcmd_prepare(config):
     cmd += cmd_video
 
     def replace_сolon(dir_name):
-        a, b, c = dir_name.partition(':')
-        if b == ':':
+        a, b, c = dir_name.partition(":")
+        if b == ":":
             dir_name = f"/mnt/{a.lower()}{c}"
         path = Path(dir_name.replace("\\", "/"))
         return path
@@ -118,9 +119,7 @@ def move_file(infile, target_dir):
             # os.remove(infile)
             logging.debug(f"Файл {infile} перемещен в {target_dir}")
         else:
-            logging.debug(
-                f"Файл {infile} перемещен в {target_dir}, но не обнаружен"
-            )
+            logging.debug(f"Файл {infile} перемещен в {target_dir}, но не обнаружен")
 
 
 def ff_run(cmd, infile, out_dir, output_ext, post_remove, post_dir=None):
@@ -150,9 +149,7 @@ def ff_run(cmd, infile, out_dir, output_ext, post_remove, post_dir=None):
     try:
         os.rename(convert_file, output_file)
     except OSError:
-        logging.error(
-            f"Не удалось переименовать файл {convert_file} в {output_file}"
-        )
+        logging.error(f"Не удалось переименовать файл {convert_file} в {output_file}")
         output_file = convert_file
 
     logging.debug(f"Выходной файл: {output_file}")
