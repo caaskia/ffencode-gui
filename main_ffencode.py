@@ -2,7 +2,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from service.conv_service import MyApplication
+from service.ui_service import MyApplication
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

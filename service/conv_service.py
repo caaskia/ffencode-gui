@@ -1,296 +1,271 @@
+# service/conv_service
+
+import json
 import os
-import sys
+import subprocess
 from pathlib import Path
 
-from PySide6.QtCore import Signal, Slot
-from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
+import ffmpy
+from PySide6.QtCore import QThread, Signal
 
-from service.transcoding_ui import Ui_Form
-from utils.utils_task import TranscodingThread
-from utils.utils_toml import load_toml, get_config_value
+from utils.utils_ffConv import getSendFiles, ffConv
+from utils.utils_ffmpeg import move_file
 
 
-class MyApplication(QMainWindow, Ui_Form):
-    sig_start_transcoding = Signal()
-    sig_stop_transcoding = Signal()
+class TranscodingThread(QThread):
     sig_show_message = Signal(str)
-    sig_print = Signal(str)
+    sig_stop = Signal()
 
-    def __init__(self):
-        super().__init__()
-        # self.ui = Ui_Form()
-        # self.ui.setupUi(self)
+    def __init__(
+        self, work_dir, target_dir, postDir, ffOptions, period=60, parent=None
+    ):
+        super().__init__(parent)
+        self.parent = parent
+        self.workDir = work_dir
+        self.targetDir = target_dir
+        self.postDir = postDir
+        self.ffOptions = ffOptions
+        self.set_period(period)
+        self.transcoding_active = True
 
-        self.setupUi(self)
-
-        self.workDir = None
-        self.targetDir = None
-        self.postDir = None
-        self.ffOptions = None
-
-        self.transcoding_thread = None
-
-        self.sig_print.connect(self.update_output)
-
-        self.workDir_button.clicked.connect(self.select_work_dir)
-        self.targetDir_button.clicked.connect(self.select_target_dir)
-        self.postDir_button.clicked.connect(self.select_post_dir)
-
-        # Connect signals to slots
-        self.start_button.clicked.connect(self.sig_start_transcoding.emit)
-        self.stop_button.clicked.connect(self.sig_stop_transcoding.emit)
-
-        # Connect slots to functions
-        self.sig_start_transcoding.connect(self.start_event)
-        self.sig_stop_transcoding.connect(self.stop_transcoding)
-
-        # Connect the valueChanged signal of the periodSlider to the update_period_edit slot
-        self.periodSlider.valueChanged.connect(self.update_period_edit)
-
-        # Connect the textChanged signal of the periodEdit to the update_period_slider slot
-        self.periodEdit.textChanged.connect(self.update_period_slider)
-
-        self.sig_show_message.connect(self.print_to_output)
-
-        # get current path
-        # DIR_PARAMS = os.path.join(os.path.dirname(__file__), "config")
-        # path_config = os.path.join(DIR_PARAMS, "config.toml")
-
-        config_path = Path(__file__).resolve().parent.parent / "config/config.toml"
-        main_config = load_toml(config_path)
-
-        if "app" in main_config:
-            app_config = main_config["app"]
-        else:
-            print("transcoding_params not found in config file")
-            sys.exit(1)
-
-        workDir = get_config_value(app_config, "workDir", "")
-        self.workDir_label.setText(workDir)
-        self.workDir = Path(workDir)
-
-        # postDir = (
-        #     app_config["postDir"]
-        #     if "postDir" in app_config
-        #     else os.path.join(self.workDir, "converted")
-        # )
-        postDir = get_config_value(
-            app_config, "postDir", os.path.join(self.workDir, "converted")
-        )
-        self.postDir_label.setText(postDir)
-        self.postDir = Path(postDir)
-
-        targetDir = get_config_value(app_config, "targetDir", "")
-        self.targetDir_label.setText(targetDir)
-        self.targetDir = Path(targetDir)
-
-        self.period = get_config_value(app_config, "period", 60)
-        self.periodSlider.setValue(self.period)
-        self.periodEdit.setText(str(self.period))
-
-        if "dict" in main_config:
-            dict_config = main_config["dict"]
-        else:
-            print("transcoding_params not found in config file")
-            sys.exit(1)
-
-        size_default = app_config["size"] if "size" in app_config else "480p"
-        size = (
-            dict_config["size"]
-            if "size" in dict_config
-            else ["1080p", "720p", "576p", "480p", "360p", "240p"]
-        )
-        self.resize_combo.addItems(size)
-        self.resize_combo.setCurrentText(size_default)
-
-        fCodec_default = app_config["fCodec"] if "fCodec" in app_config else "libx264"
-        fCodec = (
-            dict_config["fCodec"] if "fCodec" in dict_config else ["libx264", "libx265"]
-        )
-        self.fCodec_combo.addItems(fCodec)
-        self.fCodec_combo.setCurrentText(fCodec_default)
-
-        VBRate_default = app_config["VBRate"] if "VBRate" in app_config else "500k"
-        VBRate = (
-            dict_config["VBRate"]
-            if "VBRate" in dict_config
-            else [
-                "100k",
-                "200k",
-                "300k",
-                "400k",
-                "500k",
-                "600k",
-                "700k",
-                "800k",
-                "900k",
-                "1000k",
-                "2000k",
-                "3000k",
-                "4000k",
-                "5000k",
-            ]
-        )
-        self.VBRate_combo.addItems(VBRate)
-        self.VBRate_combo.setCurrentText(VBRate_default)
-
-        minVBR_default = app_config["minVBR"] if "minVBR" in app_config else "100k"
-        minVBR = (
-            dict_config["minVBR"]
-            if "minVBR" in dict_config
-            else [
-                "100k",
-                "200k",
-                "300k",
-                "400k",
-                "500k",
-                "600k",
-                "700k",
-                "800k",
-                "900k",
-                "1000k",
-            ]
-        )
-        self.minVBR_combo.addItems(minVBR)
-        self.minVBR_combo.setCurrentText(minVBR_default)
-
-        maxVBR_default = app_config["maxVBR"] if "maxVBR" in app_config else "1000k"
-        maxVBR = (
-            dict_config["maxVBR"]
-            if "maxVBR" in dict_config
-            else [
-                "1000k",
-                "2000k",
-                "3000k",
-                "4000k",
-                "5000k",
-                "6000k",
-                "7000k",
-                "8000k",
-                "9000k",
-                "10000k",
-            ]
-        )
-        self.maxVBR_combo.addItems(maxVBR)
-        self.maxVBR_combo.setCurrentText(maxVBR_default)
-
-        ext_default = app_config["ext"] if "ext" in app_config else "mp4"
-        ext = dict_config["ext"] if "ext" in dict_config else ["mp4", "mkv", "avi"]
-        self.ext_combo.clear()
-        self.ext_combo.addItems(ext)
-        self.ext_combo.setCurrentText(ext_default)
-
-    def select_work_dir(self):
-        workDir = QFileDialog.getExistingDirectory(self, "Select Work Directory")
-        if workDir:
-            self.workDir_label.setText(workDir)
-            self.workDir = Path(workDir)
-        else:
-            self.print_to_output("No work directory selected.")
-
-    def select_target_dir(self):
-        targetDir = QFileDialog.getExistingDirectory(self, "Выберите целевой каталог")
-        if targetDir != "":
-            self.targetDir_label.setText(targetDir)
-            self.targetDir = Path(targetDir)
-
-    def select_post_dir(self):
-        postDir = QFileDialog.getExistingDirectory(
-            self, "Выберите папку для перемещения оригинала"
-        )
-        if postDir != "":
-            self.postDir_label.setText(postDir)
-            self.postDir = Path(postDir)
-
-    def update_period_edit(self, value):
-        self.period = value
-        self.periodEdit.setText(str(value))
-
-    def update_period_slider(self, text):
+    def set_period(self, period_text):
         try:
-            value = int(text)
-            self.period = value
-            self.periodSlider.setValue(value)
+            period = max(int(period_text), 10)
         except ValueError:
-            self.print_to_output(f"Invalid input! Please enter a numeric value")
+            period = 60
+        self.period = period
 
-    def print_to_output(self, text):
-        # Отправляем текст через сигнал
-        self.sig_print.emit(text)
+    def send_msg(self, msg):
+        self.sig_show_message.emit(msg)
 
-    @Slot(str)  # Определяем слот для принятия текстового аргумента
-    def update_output(self, text):
-        self.output_pane.appendPlainText(text)
-        cursor = self.output_pane.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-        self.output_pane.setTextCursor(cursor)
-        self.output_pane.repaint()
+    def run(self):
+        self.transcoding_active = True
+        first_run = True
 
-    def start_event(self):
-        if self.workDir == "":
-            self.print_to_output("Please select a Work Directory")
-            # qreate  QT6 error message
-            QMessageBox.critical(self, "Error", "Please select a work directory")
-            return
+        while self.transcoding_active:
+            if first_run:
+                first_run = False
+            else:
+                self.sleep(self.period)  # Sleep for the specified period before the next run
 
-        if self.targetDir == "":
-            self.print_to_output("Please select a Work Directory")
-            # qreate  QT6 error message
-            QMessageBox.critical(self, "Error", "Please select a target directory")
-            return
+            work_files = getSendFiles(self.workDir)  # Get the list of files to process
+            target_dir = self.targetDir
 
-        self.fCodec = self.fCodec_combo.currentText()
-        self.VBRate = self.VBRate_combo.currentText()
-        self.minVBR = self.minVBR_combo.currentText()
-        self.maxVBR = self.maxVBR_combo.currentText()
-        self.ext = self.ext_combo.currentText()
-        self.resize = self.resize_combo.currentText()
+            # Ensure the target directory exists
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
 
-        self.print_to_output(f"Work Directory: {self.workDir}")
-        self.print_to_output("")
-        self.print_to_output(f"fCodec: {self.fCodec}")
-        self.print_to_output(f"VBRate: {self.VBRate}")
-        self.print_to_output(f"minVBR: {self.minVBR}")
-        self.print_to_output(f"maxVBR: {self.maxVBR}")
-        self.print_to_output(f"ext: {self.ext}")
-        self.print_to_output("")
+            if not work_files:
+                self.send_msg(f"No files found in {self.workDir}")
+                continue  # Skip the rest of the loop if no files found
 
-        self.ffOptions = (
-            self.fCodec,
-            self.VBRate,
-            self.minVBR,
-            self.maxVBR,
-            self.ext,
-            self.resize,
-        )
+            for item in work_files:
+                if not self.transcoding_active:
+                    break  # Exit the loop if transcoding is stopped
 
-        # self.ffOptions = {
-        #     "fCodec": self.fCodec_combo.currentText(),
-        #     "VBRate": self.VBRate_combo.currentText(),
-        #     "minVBR": self.minVBR_combo.currentText(),
-        #     "maxVBR": self.maxVBR_combo.currentText(),
-        #     "ext": self.ext_combo.currentText(),
-        #     "resize": self.resize_combo.currentText()
-        # }
+                in_file = os.path.join(self.workDir, item)  # Build input file path
+                self.send_msg(f"Transcoding: {in_file}")
+                info = self.get_video_info(in_file)  # Retrieve video info
 
-        self.start_transcoding()
+                # Process audio and video information
+                self.process_audio_info(info)
+                self.process_video_info(info)
 
-    def start_transcoding(self):
-        self.transcoding_thread = TranscodingThread(
-            self.workDir, self.targetDir, self.postDir, self.ffOptions, self.period
-        )
-        self.transcoding_thread.show_message.connect(self.print_to_output)
-        self.transcoding_thread.transcoding_active = True
-        self.transcoding_thread.start()
-        # change color text button to green
-        self.start_button.setStyleSheet("color: green")
-        self.stop_button.setStyleSheet("color: black")
+                # Perform the transcoding
+                out_file = ffConv(in_file, self.targetDir, ffOptions=self.ffOptions)
 
-    def stop_transcoding(self):
-        self.print_to_output("Stopping transcoding...")
-        if hasattr(self, "transcoding_thread") and self.transcoding_thread:
-            self.transcoding_thread.stop()
+                # Check if transcoding was successful
+                if out_file and os.path.exists(Path(out_file)):
+                    self.send_msg(f"Transcoding complete: {out_file}")
+                    self.send_msg("")  # Append an empty message for spacing
+                    move_file(in_file, self.postDir)  # Move original file to post-processing directory
+                else:
+                    self.send_msg(f"Transcoding failed: {in_file}")
 
-        self.stop_button.setStyleSheet("color: red")
-        self.start_button.setStyleSheet("color: black")
+        # Emit the stop signal when transcoding stops
+        self.sig_stop.emit()
+
+    def stop(self):
+        self.transcoding_active = False
+        self.wait()  # Wait for the thread to finish
+        self.send_msg("Transcoding stopped")
+
+    def process_audio_info(self, info):
+        audio_info = info.get("audio_info")
+        if audio_info:
+            self.send_msg(f"Audio channels: {info.get('audio_channels')}")
+            self.send_msg(
+                f"Audio codec name: {info.get('audio_codec_name')} ({info.get('audio_codec_long_name')})"
+            )
+            self.send_msg(f"Audio sample rate: {info.get('audio_sample_rate')}")
+
+            audio_bitrate = info.get("audio_bitrate")
+            if audio_bitrate is not None:
+                try:
+                    audio_bitrate = int(audio_bitrate)
+                except ValueError:
+                    self.send_msg(f"Audio bitrate: {audio_bitrate}")
+                else:
+                    self.send_msg(f"Audio bitrate: {audio_bitrate / 1000:.1f} kbps")
+            else:
+                self.send_msg("Audio bitrate is not available")
+
+            audio_duration = info.get("audio_duration")
+            if audio_duration is not None:
+                try:
+                    audio_duration = float(info["audio_duration"])
+                    minutes, seconds = divmod(audio_duration, 60)
+                    self.send_msg(
+                        f"Audio duration: {audio_duration:.1f} sec ({int(minutes)} min {seconds:.1f} sec)"
+                    )
+                except Exception as e:
+                    print(e)
+            else:
+                self.send_msg("Audio duration is not available")
+
+    def process_video_info(self, info):
+        video_info = info.get("video_info")
+        if video_info:
+            self.send_msg(
+                f"Video codec: {info['video_codec']} ({info['video_codec_long_name']})"
+            )
+            self.send_msg(f"Video frame size: {info['video_frame_size']}")
+            self.send_msg(
+                f"Video display aspect ratio: {info['video_display_aspect_ratio']}"
+            )
+            self.send_msg(f"Video average frame rate: {info['video_avg_frame_rate']}")
+
+            video_bitrate = info.get("video_bitrate")
+            if video_bitrate is not None:
+                try:
+                    video_bitrate = int(info["video_bitrate"])
+                except ValueError:
+                    self.send_msg(f"Video bitrate: {info['video_bitrate']}")
+                else:
+                    self.send_msg(f"Video bitrate: {video_bitrate / 1000:.1f} kbps")
+            else:
+                self.send_msg("Video bitrate is not available")
+
+            video_duration = info.get("video_duration")
+            if video_duration is not None:
+                try:
+                    video_duration = float(info["video_duration"])
+                    minutes, seconds = divmod(video_duration, 60)
+                    self.send_msg(
+                        f"Video duration: {video_duration:.1f} sec ({int(minutes)} min {seconds:.1f} sec)"
+                    )
+                    self.send_msg("")
+                except Exception as e:
+                    print(e)
+            else:
+                self.send_msg("Video duration is not available")
+
+    @staticmethod
+    def get_video_info(file_path):
+        info = {
+            "audio_info": False,
+            "audio_codec_name": None,
+            "audio_codec_long_name": None,
+            "audio_bits_per_sample": None,
+            "audio_sample_rate": None,
+            "audio_bitrate": None,
+            "audio_channels": None,
+            "audio_duration": None,
+            "video_info": False,
+            "video_codec": None,
+            "video_codec_long_name": None,
+            "video_frame_size": None,
+            "video_avg_frame_rate": None,
+            "video_display_aspect_ratio": None,
+            "video_bitrate": None,
+            "video_duration": None,
+        }
+
+        try:
+            ffprobe_cmd = ffmpy.FFprobe(
+                inputs={file_path: None},
+                global_options="-v error -show_streams -of json",
+            )
+            output, _ = ffprobe_cmd.run(stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            probe_data = json.loads(output)
+
+            video_stream = next(
+                (
+                    stream
+                    for stream in probe_data["streams"]
+                    if stream["codec_type"] == "video"
+                ),
+                None,
+            )
+            audio_stream = next(
+                (
+                    stream
+                    for stream in probe_data["streams"]
+                    if stream["codec_type"] == "audio"
+                ),
+                None,
+            )
+
+            if audio_stream:
+                info["audio_info"] = True
+                info["audio_codec_name"] = (
+                    audio_stream["codec_name"] if "codec_name" in audio_stream else None
+                )
+                info["audio_codec_long_name"] = (
+                    audio_stream["codec_long_name"]
+                    if "codec_long_name" in audio_stream
+                    else None
+                )
+                info["audio_sample_rate"] = (
+                    audio_stream["sample_rate"]
+                    if "sample_rate" in audio_stream
+                    else None
+                )
+                # info['audio_bits_per_sample'] = audio_stream[
+                #     'bits_per_sample'] if 'bits_per_sample' in audio_stream else None
+                info["audio_bitrate"] = (
+                    audio_stream["bit_rate"] if "bit_rate" in audio_stream else None
+                )
+                info["audio_channels"] = (
+                    audio_stream["channels"] if "channels" in audio_stream else None
+                )
+                info["audio_duration"] = (
+                    audio_stream["duration"] if "duration" in audio_stream else None
+                )
+
+            if video_stream:
+                info["video_info"] = True
+                info["video_frame_size"] = (
+                    f"{video_stream.get('width')}x{video_stream.get('height')}"
+                )
+                info["video_avg_frame_rate"] = (
+                    video_stream["avg_frame_rate"]
+                    if "avg_frame_rate" in video_stream
+                    else None
+                )
+                info["video_codec"] = (
+                    video_stream["codec_name"] if "codec_name" in video_stream else None
+                )
+                info["video_codec_long_name"] = (
+                    video_stream["codec_long_name"]
+                    if "codec_long_name" in video_stream
+                    else None
+                )
+                info["video_bitrate"] = (
+                    video_stream["bit_rate"] if "bit_rate" in video_stream else None
+                )
+                info["video_display_aspect_ratio"] = (
+                    video_stream["display_aspect_ratio"]
+                    if "display_aspect_ratio" in video_stream
+                    else None
+                )
+                info["video_duration"] = (
+                    video_stream["duration"] if "duration" in video_stream else None
+                )
+
+        except ffmpy.FFExecutableNotFoundError:
+            print("FFmpeg/FFprobe executable not found.")
+        except ffmpy.FFRuntimeError as e:
+            print(f"Error occurred while getting video info: {e.stderr}")
+
+        return info
