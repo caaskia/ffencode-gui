@@ -2,11 +2,14 @@
 pipenv install nuitka
 
 =========================================================================
-# python -m nuitka --standalone --plugin-enable=pyqt6 .\main_ffencode.py
+Compile
 -------------------------------------------------------------------------
-python -m nuitka --standalone --plugin-enable=pyside6 .\main_ffencode.py
-
+python -m nuitka --standalone --plugin-enable=pyside6 ./main_ffencode.py
 ------------------------------------------------------------------------
+# python -m nuitka --standalone --plugin-enable=pyqt6 .\main_ffencode.py
+========================================================================
+
+
 # python -m nuitka --recurse-all --standalone .\main_ffencode.py
 # python3 -m nuitka --clang --standalone .\main_ffencode.py
 # python3 -m nuitka --clang --standalone --show-progress .\main_ffencode.py

@@ -159,7 +159,9 @@ class MyApplication(QMainWindow, Ui_Form):
 
         if replace:
             # Move to the start of the last line
-            cursor.movePosition(QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.KeepAnchor)
+            cursor.movePosition(
+                QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.KeepAnchor
+            )
             cursor.select(QTextCursor.SelectionType.LineUnderCursor)
             cursor.removeSelectedText()  # Clear the line's content
 

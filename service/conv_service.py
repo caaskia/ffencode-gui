@@ -63,12 +63,13 @@ class TranscodingThread(QThread):
                         seconds = "секунд"
 
                     # self.send_msg(f"Запуск транскодирования через {remaining} {seconds}")
-                    self.sig_replace_message.emit(f"Запуск транскодирования через {remaining} {seconds}", True)
+                    self.sig_replace_message.emit(
+                        f"Запуск транскодирования через {remaining} {seconds}", True
+                    )
 
                     if not self.transcoding_active:
                         break
                     self.sleep(1)
-
 
             work_files = getSendFiles(self.workDir)  # Get the list of files to process
             target_dir = self.targetDir
@@ -100,7 +101,9 @@ class TranscodingThread(QThread):
                 if out_file and os.path.exists(Path(out_file)):
                     self.send_msg(f"Transcoding complete: {out_file}")
                     self.send_msg("")  # Append an empty message for spacing
-                    move_file(in_file, self.postDir)  # Move original file to post-processing directory
+                    move_file(
+                        in_file, self.postDir
+                    )  # Move original file to post-processing directory
                 else:
                     self.send_msg(f"Transcoding failed: {in_file}")
 
