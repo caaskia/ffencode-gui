@@ -2,6 +2,29 @@
 
 This document provides a detailed technical breakdown of the `ffencode-gui` project components for development and maintenance purposes.
 
+## Technologies
+
+### Core Technologies
+- **Python**: Version 3.11+ is required for running the application.
+- **uv**: Ultra-fast Python package installer and resolver.
+- **PySide6**: Used for building the cross-platform GUI application.
+- **FFmpeg**: Handles all video/audio transcoding operations.
+- **Nuitka**: Used for compiling Python code into standalone executables.
+
+### Development Tools
+- **TOML**: Configuration file format for application settings.
+- **Git**: Version control system.
+- **Linux**: Primary development and deployment platform.
+
+### Python Libraries
+- **ffmpy**: Python wrapper for FFmpeg command-line interface.
+- **python-ffmpeg**: Additional FFmpeg integration tools.
+- **toml**: Library for parsing TOML configuration files.
+- **subprocess**: Used for executing FFmpeg commands.
+- **logging**: For application logging and debugging.
+- **pathlib**: For cross-platform path handling.
+- **os**: For file system operations.
+
 ## Project Architecture
 
 The application is built using Python and the PySide6 framework for the graphical user interface. It follows a modular structure, separating the UI logic from the core transcoding functionality.
@@ -82,3 +105,11 @@ The application is built using Python and the PySide6 framework for the graphica
 1.  **Setup**: Use `uv` to create a virtual environment and install dependencies from `requirements.txt` as described in `README.md`.
 2.  **Running**: Execute `python main_ffencode.py` to launch the application.
 3.  **Building**: Use Nuitka to compile a standalone executable as per the `README.md` instructions.
+
+## Useful Links
+
+* [Documentation PySide6](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/index.html)
+* [Documentation PySide6 tutorial](https://www.pythonguis.com/pyside6-tutorial/)
+* [Documentation ffmpy](https://github.com/Ch00k/ffmpy)
+* [Documentation ffmpeg-python](https://github.com/kkroening/ffmpeg-python)
+* [Documentation Pydantic](https://docs.pydantic.dev/)
