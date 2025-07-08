@@ -5,4 +5,6 @@ uv pip compile pyproject.toml -o requirements.txt
 
 uv pip sync requirements.txt --link-mode=copy
 
+uv pip install --upgrade pyside6
+
 # pip3 freeze > requirements.txt

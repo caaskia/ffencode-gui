@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import asyncio
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtGui import QTextCursor
@@ -7,7 +8,8 @@ from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 
 from service.conv_service import TranscodingThread
 from service.transcoding_ui import Ui_Form
-from utils.utils_toml import load_toml, get_config_value
+from service.db_service import get_active_config, update_config
+from models.models_pydantic import FFEncodeConfigPydantic
 
 
 class MyApplication(QMainWindow, Ui_Form):
@@ -20,6 +22,7 @@ class MyApplication(QMainWindow, Ui_Form):
         super().__init__()
         self.setupUi(self)
 
+        self.config: FFEncodeConfigPydantic = None
         self.workDir = None
         self.targetDir = None
         self.postDir = None
@@ -44,60 +47,61 @@ class MyApplication(QMainWindow, Ui_Form):
         self.periodEdit.textChanged.connect(self.update_period_slider)
 
         # Загрузка конфигурации
-        self.load_config()
+        asyncio.create_task(self.load_config_from_db())
 
-    def load_config(self):
-        config_path = Path(__file__).resolve().parent.parent / "config/config.toml"
-        main_config = load_toml(config_path)
-        app_config = main_config.get("app", {})
-        dict_config = main_config.get("dict", {})
+    async def load_config_from_db(self):
+        self.config = await get_active_config()
 
-        self.workDir = Path(get_config_value(app_config, "workDir", ""))
+        self.workDir = Path(self.config.workDir)
         self.workDir_label.setText(str(self.workDir))
 
-        self.targetDir = Path(get_config_value(app_config, "targetDir", ""))
+        self.targetDir = Path(self.config.targetDir)
         self.targetDir_label.setText(str(self.targetDir))
 
-        self.postDir = Path(
-            get_config_value(
-                app_config, "postDir", os.path.join(self.workDir, "converted")
-            )
-        )
+        self.postDir = Path(self.config.postDir)
         self.postDir_label.setText(str(self.postDir))
 
-        self.period = get_config_value(app_config, "period", 60)
+        self.period = self.config.period
         self.periodSlider.setValue(self.period)
         self.periodEdit.setText(str(self.period))
+
+        # For now, we'll keep the dict_config part as it was, assuming it's for UI choices
+        # In the future, this could also be moved to the database
+        config_path = Path(__file__).resolve().parent.parent / "config/config.toml"
+        import toml
+
+        main_config = toml.load(config_path)
+        dict_config = main_config.get("dict", {})
 
         self.init_combo_box(
             self.resize_combo,
             dict_config.get("size", ["1080p", "720p", "576p", "480p", "360p", "240p"]),
-            app_config.get("size", "480p"),
+            self.config.size,
         )
         self.init_combo_box(
             self.fCodec_combo,
             dict_config.get("fCodec", ["libx264", "libx265"]),
-            app_config.get("fCodec", "libx264"),
+            self.config.fcodec,
         )
         self.init_combo_box(
             self.VBRate_combo,
             dict_config.get("VBRate", ["500k"]),
-            app_config.get("VBRate", "500k"),
+            self.config.VBRate,
         )
         self.init_combo_box(
             self.minVBR_combo,
             dict_config.get("minVBR", ["100k"]),
-            app_config.get("minVBR", "100k"),
+            self.config.minVBR,
         )
         self.init_combo_box(
             self.maxVBR_combo,
             dict_config.get("maxVBR", ["1000k"]),
-            app_config.get("maxVBR", "1000k"),
+            self.config.maxVBR,
         )
         self.init_combo_box(
             self.ext_combo,
             dict_config.get("ext", ["mp4", "mkv", "avi"]),
-            app_config.get("ext", "mp4"),
+            self.config.ext,
         )
 
     def init_combo_box(self, combo, items, default):
@@ -110,6 +114,8 @@ class MyApplication(QMainWindow, Ui_Form):
         if workDir:
             self.workDir_label.setText(workDir)
             self.workDir = Path(workDir)
+            self.config.workDir = workDir
+            asyncio.create_task(update_config(self.config))
         else:
             self.print_to_output("No work directory selected.")
 
@@ -118,24 +124,32 @@ class MyApplication(QMainWindow, Ui_Form):
         if targetDir:
             self.targetDir_label.setText(targetDir)
             self.targetDir = Path(targetDir)
+            self.config.targetDir = targetDir
+            asyncio.create_task(update_config(self.config))
 
     def select_post_dir(self):
         postDir = QFileDialog.getExistingDirectory(
-            self, "Выберите папку для перемещения оригинала"
+            self, "Выберите папку для перемещени�� оригинала"
         )
         if postDir:
             self.postDir_label.setText(postDir)
             self.postDir = Path(postDir)
+            self.config.postDir = postDir
+            asyncio.create_task(update_config(self.config))
 
     def update_period_edit(self, value):
         self.period = value
         self.periodEdit.setText(str(value))
+        self.config.period = value
+        asyncio.create_task(update_config(self.config))
 
     def update_period_slider(self, text):
         try:
             value = int(text)
             self.period = value
             self.periodSlider.setValue(value)
+            self.config.period = value
+            asyncio.create_task(update_config(self.config))
         except ValueError:
             self.print_to_output("Invalid input! Please enter a numeric value")
 
@@ -179,13 +193,21 @@ class MyApplication(QMainWindow, Ui_Form):
             )
             return
 
+        self.config.fcodec = self.fCodec_combo.currentText()
+        self.config.VBRate = self.VBRate_combo.currentText()
+        self.config.minVBR = self.minVBR_combo.currentText()
+        self.config.maxVBR = self.maxVBR_combo.currentText()
+        self.config.ext = self.ext_combo.currentText()
+        self.config.size = self.resize_combo.currentText()
+        asyncio.create_task(update_config(self.config))
+
         self.ffOptions = (
-            self.fCodec_combo.currentText(),
-            self.VBRate_combo.currentText(),
-            self.minVBR_combo.currentText(),
-            self.maxVBR_combo.currentText(),
-            self.ext_combo.currentText(),
-            self.resize_combo.currentText(),
+            self.config.fcodec,
+            self.config.VBRate,
+            self.config.minVBR,
+            self.config.maxVBR,
+            self.config.ext,
+            self.config.size,
         )
         self.start_transcoding()
 

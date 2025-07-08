@@ -1,17 +1,27 @@
+[tool.aerich]
+tortoise_orm = "service.db_service.DB_CONFIG"
+location = "./migrations"
+src_folder = "."
 [tool.poetry]
 name = "ffencode-gui"
 version = "0.1.0"
 description = ""
-authors = ["caas <caaskia@gmail.com>"]
+authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+packages = [{include = "ffencode_gui"}]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-pyside6 = "^6.6.2"
-ffmpy = "^0.3.2"
-python-ffmpeg = "^2.0.10"
-toml = "^0.10.2"
-nuitka = "^2.1.2"
+python = "^3.11"
+ffmpy = "0.4.0"
+pyside6 = "6.9.1"
+pyside6-addons = "6.9.1"
+pyside6-essentials = "6.9.1"
+shiboken6 = "6.9.1"
+toml = "0.10.2"
+tortoise-orm = "0.21.4"
+pydantic = "2.8.2"
+aerich = "0.7.2"
+aiosqlite = "0.20.0"
 
 
 [build-system]
