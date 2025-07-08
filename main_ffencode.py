@@ -1,21 +1,24 @@
-import sys
 import asyncio
-from PySide6.QtWidgets import QApplication
-from service.ui_service import MyApplication
-from service.db_service import load_config_from_toml, get_active_config
-from db.config_tortoise import init_db, close_db
-from tortoise import run_async
+import sys
+
 import qasync
+from PySide6.QtWidgets import QApplication
+from tortoise import run_async
+
+from db_client.client_tortoise import init_db, close_db
+from service.db_service import get_active_config
+from service.ui_service import MyApplication
 
 
 async def main():
     await init_db()
 
-    # Проверяем, есть ли конфигурации в базе, если нет - загружаем из toml
+    # Check if there are configurations in the database, if not - load from TOML
     try:
         await get_active_config()
-    except Exception:
-        await load_config_from_toml()
+    except Exception as e:
+        print(f"Error loading configuration: {e}")
+        raise
 
     app = QApplication(sys.argv)
     loop = qasync.QEventLoop(app)

@@ -3,7 +3,7 @@ from typing import List
 import toml
 from tortoise import run_async
 
-from db.config_tortoise import init_db, close_db
+from db_client.client_tortoise import init_db, close_db
 from models.models_tortoise import FFEncodeConfig
 from models.models_pydantic import FFEncodeConfigPydantic
 
@@ -44,7 +44,7 @@ async def load_config_from_toml(
         print(f"An error occurred while loading config from TOML: {e}")
 
 
-async def get_active_config() -> FFEncodeConfigPydantic:
+async def get_active_config() -> FFEncodeConfigPydantic | None:
     config = await FFEncodeConfig.filter(active=True).first()
     if not config:
         # Если активной конфигурации нет, загружаем из toml
@@ -54,8 +54,12 @@ async def get_active_config() -> FFEncodeConfigPydantic:
             raise Exception(
                 "No active configuration found and could not load from TOML."
             )
-
-    return await FFEncodeConfigPydantic.from_tortoise_orm(config)
+    try:
+        result = await FFEncodeConfigPydantic.from_tortoise_orm(config)
+    except Exception as e:
+        print(f"Error loading active configuration: {e}")
+        return None
+    return result
 
 
 async def get_all_configs() -> List[FFEncodeConfigPydantic]:

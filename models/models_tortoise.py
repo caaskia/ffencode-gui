@@ -20,5 +20,3 @@ class FFEncodeConfig(Model):
 
     class Meta:
         table = "ffencode_config"
-
-
